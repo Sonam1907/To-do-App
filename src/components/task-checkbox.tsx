@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
-import { toggleTaskComplete } from "@/app/actions";
+import { toggleTaskComplete } from "@/app/(app)/actions";
 
 export function TaskCheckbox({
   taskId,
