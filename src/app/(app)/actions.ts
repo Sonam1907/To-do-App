@@ -4,12 +4,22 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { isPriorityValue } from "@/lib/priority";
 
 async function requireUserId() {
   const session = await auth();
   const userId = session?.user?.id;
   if (!userId) throw new Error("Not authenticated");
   return userId;
+}
+
+function parseLabelNames(raw: string | null): string[] {
+  if (!raw) return [];
+  const names = raw
+    .split(",")
+    .map((name) => name.trim())
+    .filter((name) => name.length > 0);
+  return Array.from(new Set(names));
 }
 
 export async function createTask(formData: FormData) {
@@ -19,8 +29,36 @@ export async function createTask(formData: FormData) {
 
   const projectId = (formData.get("projectId") as string | null) || null;
 
-  await prisma.task.create({
-    data: { title, ownerId: userId, projectId },
+  const rawPriority = formData.get("priority") as string | null;
+  const priority = rawPriority && isPriorityValue(rawPriority) ? rawPriority : "MEDIUM";
+
+  const labelNames = parseLabelNames(formData.get("labels") as string | null);
+
+  const task = await prisma.task.create({
+    data: { title, ownerId: userId, projectId, priority },
+  });
+
+  for (const name of labelNames) {
+    const label = await prisma.label.upsert({
+      where: { ownerId_name: { ownerId: userId, name } },
+      update: {},
+      create: { ownerId: userId, name },
+    });
+    await prisma.taskLabel.create({
+      data: { taskId: task.id, labelId: label.id },
+    });
+  }
+
+  revalidatePath("/", "layout");
+}
+
+export async function setTaskPriority(taskId: string, priority: string) {
+  const userId = await requireUserId();
+  if (!isPriorityValue(priority)) return;
+
+  await prisma.task.updateMany({
+    where: { id: taskId, ownerId: userId },
+    data: { priority },
   });
 
   revalidatePath("/", "layout");

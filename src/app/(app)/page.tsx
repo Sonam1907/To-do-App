@@ -11,6 +11,7 @@ export default async function InboxPage() {
   const tasks = await prisma.task.findMany({
     where: { ownerId: userId, projectId: null },
     orderBy: [{ completed: "asc" }, { createdAt: "asc" }],
+    include: { labels: { include: { label: true } } },
   });
 
   return (

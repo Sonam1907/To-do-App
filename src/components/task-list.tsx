@@ -1,16 +1,32 @@
-import type { Task } from "@/generated/prisma/client";
+import type { Prisma } from "@/generated/prisma/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { TaskCheckbox } from "@/components/task-checkbox";
+import { TaskPrioritySelect } from "@/components/task-priority-select";
+import { PrioritySelectField } from "@/components/priority-select-field";
 import { createTask, deleteTask } from "@/app/(app)/actions";
 
-export function TaskList({ tasks, projectId }: { tasks: Task[]; projectId?: string }) {
+type TaskWithLabels = Prisma.TaskGetPayload<{
+  include: { labels: { include: { label: true } } };
+}>;
+
+export function TaskList({
+  tasks,
+  projectId,
+}: {
+  tasks: TaskWithLabels[];
+  projectId?: string;
+}) {
   return (
     <div className="flex w-full max-w-lg flex-col gap-6">
-      <form action={createTask} className="flex gap-2">
+      <form action={createTask} className="flex flex-col gap-2">
         {projectId && <input type="hidden" name="projectId" value={projectId} />}
-        <Input name="title" placeholder="Add a task..." required />
-        <Button type="submit">Add</Button>
+        <div className="flex gap-2">
+          <Input name="title" placeholder="Add a task..." required />
+          <PrioritySelectField />
+          <Button type="submit">Add</Button>
+        </div>
+        <Input name="labels" placeholder="Labels (comma separated, optional)" />
       </form>
 
       <ul className="flex flex-col gap-2">
@@ -23,13 +39,26 @@ export function TaskList({ tasks, projectId }: { tasks: Task[]; projectId?: stri
             className="flex items-center gap-3 rounded-lg border border-border px-3 py-2"
           >
             <TaskCheckbox taskId={task.id} defaultChecked={task.completed} />
-            <span
-              className={
-                task.completed ? "flex-1 text-muted-foreground line-through" : "flex-1"
-              }
-            >
-              {task.title}
-            </span>
+            <div className="flex flex-1 flex-col gap-1">
+              <span
+                className={task.completed ? "text-muted-foreground line-through" : undefined}
+              >
+                {task.title}
+              </span>
+              {task.labels.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {task.labels.map(({ label }) => (
+                    <span
+                      key={label.id}
+                      className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground"
+                    >
+                      {label.name}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+            <TaskPrioritySelect taskId={task.id} defaultValue={task.priority} />
             <form action={deleteTask.bind(null, task.id)}>
               <Button type="submit" variant="ghost" size="sm">
                 Delete
