@@ -24,9 +24,12 @@ export default async function ProjectPage({
   }
 
   const tasks = await prisma.task.findMany({
-    where: { ownerId: userId, projectId },
+    where: { ownerId: userId, projectId, parentId: null },
     orderBy: [{ completed: "asc" }, { createdAt: "asc" }],
-    include: { labels: { include: { label: true } } },
+    include: {
+      labels: { include: { label: true } },
+      subtasks: { orderBy: [{ completed: "asc" }, { createdAt: "asc" }] },
+    },
   });
 
   return (

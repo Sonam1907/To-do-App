@@ -34,8 +34,11 @@ export async function createTask(formData: FormData) {
 
   const labelNames = parseLabelNames(formData.get("labels") as string | null);
 
+  const rawDueDate = formData.get("dueDate") as string | null;
+  const dueDate = rawDueDate ? new Date(rawDueDate) : null;
+
   const task = await prisma.task.create({
-    data: { title, ownerId: userId, projectId, priority },
+    data: { title, ownerId: userId, projectId, priority, dueDate },
   });
 
   for (const name of labelNames) {
@@ -59,6 +62,40 @@ export async function setTaskPriority(taskId: string, priority: string) {
   await prisma.task.updateMany({
     where: { id: taskId, ownerId: userId },
     data: { priority },
+  });
+
+  revalidatePath("/", "layout");
+}
+
+export async function setTaskDueDate(taskId: string, dueDate: string | null) {
+  const userId = await requireUserId();
+
+  await prisma.task.updateMany({
+    where: { id: taskId, ownerId: userId },
+    data: { dueDate: dueDate ? new Date(dueDate) : null },
+  });
+
+  revalidatePath("/", "layout");
+}
+
+export async function createSubtask(formData: FormData) {
+  const userId = await requireUserId();
+  const title = (formData.get("title") as string | null)?.trim();
+  const parentId = formData.get("parentId") as string | null;
+  if (!title || !parentId) return;
+
+  const parent = await prisma.task.findFirst({
+    where: { id: parentId, ownerId: userId },
+  });
+  if (!parent) return;
+
+  await prisma.task.create({
+    data: {
+      title,
+      ownerId: userId,
+      projectId: parent.projectId,
+      parentId: parent.id,
+    },
   });
 
   revalidatePath("/", "layout");

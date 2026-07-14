@@ -9,9 +9,12 @@ export default async function InboxPage() {
   const userId = session.user.id;
 
   const tasks = await prisma.task.findMany({
-    where: { ownerId: userId, projectId: null },
+    where: { ownerId: userId, projectId: null, parentId: null },
     orderBy: [{ completed: "asc" }, { createdAt: "asc" }],
-    include: { labels: { include: { label: true } } },
+    include: {
+      labels: { include: { label: true } },
+      subtasks: { orderBy: [{ completed: "asc" }, { createdAt: "asc" }] },
+    },
   });
 
   return (
