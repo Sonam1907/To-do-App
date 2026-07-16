@@ -22,8 +22,8 @@ model User {
   email        String   @unique
   name         String?
   passwordHash String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt    DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime @updatedAt @db.Timestamptz(3)
 
   projects     Project[]
   tasks        Task[]
@@ -37,8 +37,8 @@ model Project {
   id        String   @id @default(cuid())
   name      String
   color     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   ownerId String
   owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
@@ -54,7 +54,7 @@ model Section {
   id        String   @id @default(cuid())
   name      String
   order     Int      @default(0)
-  createdAt DateTime @default(now())
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
 
   projectId String
   project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
@@ -71,10 +71,10 @@ model Task {
   description String?
   completed   Boolean   @default(false)
   priority    Priority  @default(MEDIUM)
-  dueDate     DateTime?
+  dueDate     DateTime? @db.Timestamptz(3)
   order       Int       @default(0)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt   DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime  @updatedAt @db.Timestamptz(3)
 
   ownerId String
   owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
@@ -127,9 +127,9 @@ model TaskLabel {
 
 model Reminder {
   id        String   @id @default(cuid())
-  remindAt  DateTime
+  remindAt  DateTime @db.Timestamptz(3)
   sent      Boolean  @default(false)
-  createdAt DateTime @default(now())
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
 
   taskId String
   task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
@@ -142,7 +142,7 @@ model Reminder {
 model ActivityLog {
   id        String   @id @default(cuid())
   action    String
-  createdAt DateTime @default(now())
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
 
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)

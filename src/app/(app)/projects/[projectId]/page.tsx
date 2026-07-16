@@ -35,6 +35,7 @@ export default async function ProjectPage({
       include: {
         labels: { include: { label: true } },
         subtasks: { orderBy: [{ completed: "asc" }, { createdAt: "asc" }] },
+        reminders: { orderBy: { remindAt: "asc" } },
       },
     }),
     prisma.label.findMany({ where: { ownerId: userId }, orderBy: { name: "asc" } }),

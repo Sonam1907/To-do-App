@@ -5,13 +5,20 @@ import { TaskCheckbox } from "@/components/task-checkbox";
 import { TaskPrioritySelect } from "@/components/task-priority-select";
 import { PrioritySelectField } from "@/components/priority-select-field";
 import { TaskDueDate } from "@/components/task-due-date";
-import { formatDueDate, isOverdue, toDateInputValue } from "@/lib/date";
-import { createTask, createSubtask, deleteTask } from "@/app/(app)/actions";
+import { formatDueDate, formatDateTime, isOverdue, toDateInputValue } from "@/lib/date";
+import {
+  createTask,
+  createSubtask,
+  createReminder,
+  deleteReminder,
+  deleteTask,
+} from "@/app/(app)/actions";
 
 type TaskWithRelations = Prisma.TaskGetPayload<{
   include: {
     labels: { include: { label: true } };
     subtasks: true;
+    reminders: true;
   };
 }>;
 
@@ -115,6 +122,32 @@ export function TaskList({
                   <Input name="title" placeholder="Add subtask..." className="h-7 text-sm" />
                   <Button type="submit" variant="ghost" size="sm">
                     Add
+                  </Button>
+                </form>
+
+                {task.reminders.map((reminder) => (
+                  <div key={reminder.id} className="flex items-center gap-2 text-sm">
+                    <span className="flex-1 text-muted-foreground">
+                      🔔 Remind at {formatDateTime(reminder.remindAt)}
+                      {reminder.sent && " (sent)"}
+                    </span>
+                    <form action={deleteReminder.bind(null, reminder.id)}>
+                      <Button type="submit" variant="ghost" size="sm">
+                        Delete
+                      </Button>
+                    </form>
+                  </div>
+                ))}
+                <form action={createReminder} className="flex gap-2">
+                  <input type="hidden" name="taskId" value={task.id} />
+                  <Input
+                    name="remindAt"
+                    type="datetime-local"
+                    className="h-7 flex-1 text-sm"
+                    required
+                  />
+                  <Button type="submit" variant="ghost" size="sm">
+                    Remind me
                   </Button>
                 </form>
               </div>

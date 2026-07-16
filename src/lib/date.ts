@@ -14,3 +14,12 @@ export function isOverdue(date: Date | null, completed: boolean): boolean {
   todayStart.setHours(0, 0, 0, 0);
   return date.getTime() < todayStart.getTime();
 }
+
+export function formatDateTime(date: Date): string {
+  return date.toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}

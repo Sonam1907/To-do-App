@@ -101,6 +101,34 @@ export async function createSubtask(formData: FormData) {
   revalidatePath("/", "layout");
 }
 
+export async function createReminder(formData: FormData) {
+  const userId = await requireUserId();
+  const taskId = formData.get("taskId") as string | null;
+  const remindAtRaw = formData.get("remindAt") as string | null;
+  if (!taskId || !remindAtRaw) return;
+
+  const task = await prisma.task.findFirst({
+    where: { id: taskId, ownerId: userId },
+  });
+  if (!task) return;
+
+  await prisma.reminder.create({
+    data: { taskId: task.id, remindAt: new Date(remindAtRaw) },
+  });
+
+  revalidatePath("/", "layout");
+}
+
+export async function deleteReminder(reminderId: string) {
+  const userId = await requireUserId();
+
+  await prisma.reminder.deleteMany({
+    where: { id: reminderId, task: { ownerId: userId } },
+  });
+
+  revalidatePath("/", "layout");
+}
+
 export async function toggleTaskComplete(taskId: string, completed: boolean) {
   const userId = await requireUserId();
 
